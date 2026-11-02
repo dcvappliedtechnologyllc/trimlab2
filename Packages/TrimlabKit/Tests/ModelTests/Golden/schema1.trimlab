@@ -1,0 +1,143 @@
+{
+  "app" : "trimlab 2.0",
+  "clips" : [
+    {
+      "facts" : {
+        "bitrate" : 20000000,
+        "captureDate" : 783000000.25,
+        "displayHeight" : 1920,
+        "displayWidth" : 1080,
+        "duration" : [
+          1001,
+          100
+        ],
+        "frameDuration" : [
+          1001,
+          30000
+        ],
+        "hasAudio" : true,
+        "hdr" : "hlg",
+        "needsRemux" : false,
+        "rotation" : 90,
+        "videoCodec" : "hvc1"
+      },
+      "framing" : "fill",
+      "futureNote" : "keep me",
+      "id" : "1F0C3B4A-6E2D-4C8B-9A71-0D5E2F3A4B01",
+      "inTime" : [
+        0,
+        1
+      ],
+      "join" : {
+        "cut" : {
+
+        }
+      },
+      "outTime" : [
+        1001,
+        100
+      ],
+      "source" : {
+        "absolutePath" : "/Users/me/Movies/Spa Tour/IMG_4821.MOV",
+        "modified" : 783000123.5,
+        "relativePath" : "IMG_4821.MOV",
+        "size" : 123456789
+      }
+    },
+    {
+      "facts" : {
+        "bitrate" : 12000000,
+        "displayHeight" : 1920,
+        "displayWidth" : 1080,
+        "duration" : [
+          10,
+          1
+        ],
+        "frameDuration" : [
+          1001,
+          30000
+        ],
+        "hasAudio" : true,
+        "hdr" : "sdr",
+        "needsRemux" : false,
+        "rotation" : 0,
+        "videoCodec" : "avc1"
+      },
+      "framing" : "fill",
+      "id" : "1F0C3B4A-6E2D-4C8B-9A71-0D5E2F3A4B02",
+      "inTime" : [
+        1001,
+        1000
+      ],
+      "join" : {
+        "crossfade" : [
+          1,
+          4
+        ]
+      },
+      "outTime" : [
+        1001,
+        125
+      ],
+      "source" : {
+        "absolutePath" : "/Users/me/Movies/Spa Tour/IMG_4830.MOV",
+        "modified" : 783000456.75,
+        "size" : 98765432
+      }
+    },
+    {
+      "facts" : {
+        "bitrate" : 8000000,
+        "displayHeight" : 1080,
+        "displayWidth" : 1920,
+        "duration" : [
+          6,
+          1
+        ],
+        "frameDuration" : [
+          1,
+          30
+        ],
+        "hasAudio" : false,
+        "hdr" : "sdr",
+        "needsRemux" : true,
+        "rotation" : 0,
+        "videoCodec" : "avc1"
+      },
+      "framing" : "fit",
+      "id" : "1F0C3B4A-6E2D-4C8B-9A71-0D5E2F3A4B03",
+      "inTime" : [
+        1,
+        2
+      ],
+      "join" : {
+        "cut" : {
+
+        }
+      },
+      "outTime" : [
+        5,
+        1
+      ],
+      "source" : {
+        "absolutePath" : "/Users/me/Movies/Spa Tour/pool.mkv",
+        "modified" : 783000789,
+        "size" : 4567890
+      }
+    }
+  ],
+  "export" : {
+    "convertHDR" : false,
+    "cut" : "exact",
+    "fileName" : "Spa Tour final",
+    "folder" : "/Users/me/Movies/Reels",
+    "format" : "original",
+    "futureNote" : "keep me",
+    "quality" : "standard",
+    "removeAudio" : true
+  },
+  "futureNote" : "keep me",
+  "id" : "7A1E9C20-3B4D-4F5A-8C6B-2D1E0F9A8B7C",
+  "name" : "Spa Tour",
+  "schema" : 1
+}

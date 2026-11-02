@@ -1,0 +1,107 @@
+name: trimlab
+options:
+  bundleIdPrefix: com.dcv
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    ENABLE_HARDENED_RUNTIME: NO
+    # Apple silicon only (docs/rulings.md). Package targets don't inherit this; App/build.sh passes ARCHS=arm64.
+    ARCHS: arm64
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
+packages:
+  TrimlabKit:
+    path: Packages/TrimlabKit
+targets:
+  trimlab:
+    type: application
+    platform: macOS
+    sources:
+      - path: App
+        excludes:
+          - "Info.plist"
+          - "*.sh"
+      - path: Resources/Fonts
+        type: folder
+        buildPhase: resources
+        optional: true
+      - path: Resources/Assets
+        buildPhase: resources
+        optional: true
+      - path: assets/trimlab.icns
+        buildPhase: resources
+    dependencies:
+      - package: TrimlabKit
+        product: TrimlabModel
+      - package: TrimlabKit
+        product: TrimlabMedia
+      - package: TrimlabKit
+        product: TrimlabEditor
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dcv.trimlab2
+        PRODUCT_NAME: trimlab2
+        INFOPLIST_FILE: App/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+  SmokeTests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: trimlab
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dcv.trimlab2.SmokeTests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: trimlab
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+  BenchTests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: UITests-Bench
+    dependencies:
+      - target: trimlab
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dcv.trimlab2.BenchTests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: trimlab
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+schemes:
+  trimlab-bench:
+    build:
+      targets:
+        trimlab: all
+    test:
+      # No screen recording: XCTest records UI tests with the hardware video encoder, which the export shares (an
+      # 18-clip export ran at about 11 s under it, 7.6-8.5 s without; Task 42).
+      preferredScreenCaptureFormat: screenshots
+      targets:
+        - BenchTests
+  trimlab:
+    build:
+      targets:
+        trimlab: all
+    run:
+      config: Debug
+    test:
+      targets:
+        - SmokeTests
+  TrimlabKit:
+    build:
+      targets:
+        trimlab: [test]
+    test:
+      targets:
+        - package: TrimlabKit/ModelTests
+        - package: TrimlabKit/MediaTests
+        - package: TrimlabKit/EditorTests

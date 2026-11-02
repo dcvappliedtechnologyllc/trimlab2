@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="en" style="background:#0B0C0E">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>trimlab 2</title>
+<link rel="stylesheet" href="../assets/brand.css">
+<style>
+/* ===== tokens: brand.css verbatim + v1 derived tokens (../trimlab docs/superpowers/specs/2026-10-27-trimlab-ui-design.md, "Tokens")
+   v2 adds no colour. New sizes: docs/superpowers/specs/2026-10-28-trimlab2-ui-design.md ===== */
+:root{
+  --gold-hover:color-mix(in srgb,var(--brand-gold) 82%,var(--brand-ink));--gold-press:color-mix(in srgb,var(--brand-gold) 88%,var(--bg-0));
+  --gold-glow:color-mix(in srgb,var(--brand-gold) 55%,transparent);--gold-hair:color-mix(in srgb,var(--brand-gold) 85%,transparent);
+  --guide-dim:color-mix(in srgb,var(--bg-0) 40%,transparent);--deck-out:color-mix(in srgb,var(--bg-0) 70%,transparent);
+  --scrim:color-mix(in srgb,var(--bg-0) 62%,transparent);--key-on-gold:color-mix(in srgb,var(--bg-0) 55%,transparent);
+  --select:color-mix(in srgb,var(--brand-gold) 35%,transparent);
+  --wave:var(--brand-steel);--tip-bg:color-mix(in srgb,var(--bg-2) 70%,var(--line));
+  --header-h:56px;--inspector-w:300px;--bottom-h:278px;
+  --ease-out:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg-0);color:var(--text);
+  font:13px/1.38 Inter,system-ui,-apple-system,sans-serif;font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  overflow:hidden;user-select:none;-webkit-user-select:none;cursor:default;
+  display:grid;grid-template-rows:var(--header-h) minmax(0,1fr) var(--bottom-h);grid-template-columns:minmax(0,1fr) var(--inspector-w);
+}
+::selection{background:var(--select);color:var(--brand-ink)}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--brand-gold);outline-offset:2px}
+button{font:inherit;color:inherit;background:none;border:0;margin:0;padding:0;cursor:default;-webkit-appearance:none;appearance:none}
+.no-anim *,.no-anim *::before,.no-anim *::after{transition:none!important;animation:none!important}
+
+/* ===== header + lockup (v1 verbatim) ===== */
+header{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:0 16px 0 78px;border-bottom:1px solid var(--line);background:var(--bg-0)}
+#lockup{display:flex;align-items:center;gap:16px;color:var(--brand-ink);flex:none}
+#dcvlogo{height:46px;width:auto;display:block}
+#lockup .x{color:var(--muted);font-size:15px;opacity:.6}
+#ctc{height:28px;width:270px;display:block;overflow:visible}
+.ctcw{font-family:'Bodoni Moda','Playfair Display',Georgia,'Times New Roman',serif;font-size:40px;font-weight:500;font-variant:small-caps;letter-spacing:.28em}
+#lockup .app{color:var(--muted);font-size:11px;letter-spacing:.22em;margin-left:14px;padding-left:16px;border-left:1px solid var(--line);height:28px;display:flex;align-items:center}
+header .sp{flex:1}
+/* v2: the Reel name is a quiet button (click renames the .trimlab file inline); a one-clip Reel shows the file name */
+#fname{font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;height:28px;border-radius:6px;transition:color .12s}
+#fname.reel:hover{color:var(--brand-ink)}
+#help{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);color:var(--muted);font-weight:600;font-size:13px;display:grid;place-items:center;margin-left:8px}
+#help:hover{color:var(--text);border-color:var(--muted)}
+
+/* ===== stage ===== */
+#stage{grid-row:2;grid-column:1;position:relative;background:var(--bg-0);display:grid;place-items:center;padding:16px 32px;min-height:0;overflow:hidden}
+.frame{position:relative;display:block;max-width:100%;max-height:100%;overflow:hidden;border-radius:3px}
+.frame img{display:block;width:100%;height:100%;object-fit:cover;background:var(--bg-0)}
+#pv-portrait{height:100%;aspect-ratio:9/16}
+#pv-landscape{width:100%;aspect-ratio:16/9;height:auto}
+.guide{position:absolute;top:0;bottom:0;left:50%;aspect-ratio:9/16;transform:translateX(-50%);outline:1px solid var(--gold-hair);outline-offset:-1px;box-shadow:0 0 0 100vmax var(--guide-dim)}
+#stage-note{margin:0;color:var(--muted);text-align:center;line-height:18px}
+#stage>*{display:none}
+body[data-stage=portrait] #pv-portrait,body[data-stage=landscape] #pv-landscape,body[data-stage=note] #stage-note,body[data-stage=empty] #empty{display:block}
+#empty{text-align:center}
+#empty h1{margin:0;font:italic 400 64px/72px 'Bodoni Moda',Georgia,serif;color:var(--brand-ink);letter-spacing:-.005em}
+#empty p{margin:8px 0 0;font:400 13px/18px Inter,system-ui,sans-serif;color:var(--muted)}
+
+/* empty: v1's empty screen, stage only */
+body[data-state=empty]{grid-template-rows:var(--header-h) minmax(0,1fr);grid-template-columns:minmax(0,1fr)}
+body[data-state=empty] #inspector,body[data-state=empty] #bottom,body[data-state=empty] #fname,body[data-state=empty] #help{display:none}
+/* Finder drag over the window: v1's armed hairline frame */
+body.drop-armed::after{content:"";position:fixed;inset:6px;border-radius:10px;box-shadow:inset 0 0 0 1px var(--gold-hair);pointer-events:none;z-index:60}
+
+/* ===== inspector (v1, plus the Reel total) ===== */
+#inspector{grid-row:2;grid-column:2;background:var(--bg-1);border-left:1px solid var(--line);display:flex;flex-direction:column;padding:22px 24px 24px;min-height:0}
+.sec{padding:16px 0;border-top:1px solid var(--line)}
+.sec:first-child{padding-top:0;border-top:0}
+#clipname{font-size:15px;line-height:20px;font-weight:600;color:var(--brand-ink);margin:0 0 4px}
+.meta{font-size:12px;line-height:17px;color:var(--muted);margin:0}
+.locate{margin-top:10px}
+.tc-row{display:grid;grid-template-columns:40px 1fr;align-items:baseline;line-height:24px}
+.tc-row .k{color:var(--muted)}
+.tc{font-size:15px;font-weight:500;color:var(--text)}
+#len{margin:0;font-size:44px;line-height:48px;font-weight:600;letter-spacing:-.02em;color:var(--brand-ink);white-space:nowrap}
+#len small{font-size:20px;font-weight:500;letter-spacing:0;color:var(--muted);margin-left:4px}
+#len .of{font-size:20px;font-weight:500;letter-spacing:0;color:var(--muted);margin-left:10px}
+#len.warn{color:var(--warn)}
+.count{margin:2px 0 0;font-size:12px;line-height:17px;color:var(--muted)}
+.over{margin:8px 0 0;font-size:12px;line-height:17px;color:var(--warn)}
+.sec.tcs+.sec.total{padding-top:14px}
+.grow{flex:1}
+
+/* switch row */
+.sw{display:flex;align-items:center;gap:10px;width:100%;height:32px;text-align:left;border-radius:6px}
+.sw .lbl{flex:1;color:var(--text);font-weight:500}
+.sw .key{color:var(--muted);font-size:12px;min-width:12px;text-align:right}
+.sw .track{position:relative;flex:none;width:28px;height:16px;border-radius:8px;background:var(--bg-2);box-shadow:inset 0 0 0 1px var(--line);transition:background .14s}
+.sw .track::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--muted);transition:transform .14s var(--ease-out),background .14s}
+.sw[aria-checked=true] .track{background:var(--brand-gold);box-shadow:none}
+.sw[aria-checked=true] .track::after{transform:translateX(12px);background:var(--bg-0)}
+
+/* buttons (v1) */
+.primary{display:flex;align-items:center;justify-content:center;gap:10px;height:40px;width:100%;border-radius:8px;background:var(--brand-gold);color:var(--bg-0);font-size:13.5px;font-weight:600;transition:background .12s}
+.primary:hover{background:var(--gold-hover)}
+.primary:active{background:var(--gold-press)}
+.primary .key{font-weight:500;color:var(--key-on-gold)}
+.btn{display:inline-flex;align-items:center;gap:8px;height:30px;padding:0 12px;border-radius:7px;border:1px solid var(--line);color:var(--text);font-weight:500;white-space:nowrap;transition:border-color .12s,color .12s}
+.btn:hover{border-color:var(--muted);color:var(--brand-ink)}
+.ibtn{display:grid;place-items:center;width:30px;height:30px;border-radius:7px;color:var(--muted)}
+.ibtn:hover{background:var(--bg-2);color:var(--text)}
+.ibtn svg{width:16px;height:16px}
+.ibtn.play{width:34px;height:34px;color:var(--text)}
+.ibtn.sm{width:24px;height:24px;border-radius:6px}
+.ibtn.sm svg{width:14px;height:14px}
+
+/* ===== bottom: transport 40, strip 80, caption 28, deck 122, pad 8 = 278 ===== */
+#bottom{grid-row:3;grid-column:1/-1;background:var(--bg-1);border-top:1px solid var(--line);padding:0 20px 8px;display:grid;grid-template-rows:40px 80px 28px 122px;min-width:0}
+#transport{display:flex;align-items:center;gap:2px;margin:0 -6px}
+#playtc{margin-left:12px;font-size:15px;font-weight:500;color:var(--text);white-space:nowrap}
+#playtc .tot{color:var(--muted)}
+#playtc .now{display:inline-block;width:60px}
+.zoom{display:flex;align-items:center;gap:2px;color:var(--muted);font-size:12px}
+.zoom span{padding:0 4px}
+#reelstrip{display:block;width:100%;height:80px}
+/* caption row: hairline above, clip name left, per-clip controls right */
+#caption{display:flex;align-items:center;gap:16px;margin:0 -20px;padding:0 14px 0 20px;border-top:1px solid var(--line);min-width:0}
+#caption .name{font-weight:500;color:var(--text);white-space:nowrap}
+#caption .pos{color:var(--muted);font-size:12px;white-space:nowrap}
+#caption .sel{color:var(--muted);font-size:12px;white-space:nowrap}
+#caption .sp{flex:1}
+#caption .ctl{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;white-space:nowrap}
+#deck{display:block;width:100%;height:122px}
+
+/* segmented (v1) + the compact caption size */
+.seg{position:relative;display:inline-grid;grid-auto-flow:column;grid-auto-columns:90px;height:28px;padding:2px;border-radius:7px;background:var(--bg-0);box-shadow:inset 0 0 0 1px var(--line);justify-self:start}
+.seg button{border-radius:5px;color:var(--muted);font-weight:500;transition:color .12s}
+.seg button:hover:not([aria-disabled=true]){color:var(--text)}
+.seg button[aria-pressed=true]{background:var(--bg-2);box-shadow:inset 0 0 0 1px var(--line);color:var(--brand-ink)}
+.seg button[aria-disabled=true]{opacity:.35}
+.seg .hold{position:relative;display:grid}
+.seg.sm{grid-auto-columns:52px;height:22px;border-radius:6px}
+.seg.sm button{font-size:12px;border-radius:4px}
+
+/* tooltip (v1) */
+.tip{position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);width:206px;padding:6px 10px;border-radius:6px;background:var(--tip-bg);box-shadow:inset 0 0 0 1px var(--line);color:var(--text);font-size:12px;line-height:16px;font-weight:400;text-align:left;opacity:0;pointer-events:none;transition:opacity .12s;z-index:2}
+.tip::before{content:"";position:absolute;right:100%;top:50%;margin-top:-5px;border:5px solid transparent;border-right-color:var(--tip-bg)}
+.tip.show{opacity:1}
+#ftip{position:fixed;left:0;top:0;width:auto;max-width:240px;white-space:nowrap;transform:none;z-index:20}
+#ftip::before{right:auto;left:var(--ax,50%);top:100%;margin:0 0 0 -5px;border-color:transparent;border-top-color:var(--tip-bg)}
+#ftip.below::before{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:var(--tip-bg)}
+
+/* ===== sheet (v1) ===== */
+#scrim{position:fixed;left:0;right:0;top:var(--header-h);bottom:0;background:var(--scrim);opacity:0;pointer-events:none;transition:opacity .22s var(--ease-out);z-index:5}
+#sheetwrap{position:fixed;top:var(--header-h);left:0;right:var(--inspector-w);display:flex;justify-content:center;pointer-events:none;overflow:hidden;z-index:6;height:calc(100% - var(--header-h))}
+#sheet{width:560px;align-self:flex-start;background:var(--bg-1);border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;transform:translateY(-101%);transition:transform .18s var(--ease-out);pointer-events:auto}
+body.open #scrim{opacity:1;pointer-events:auto}
+body.open #sheet{transform:none;transition-duration:.22s}
+.pane{padding:22px 28px 24px}
+body:not([data-view=done]) #done,body[data-view=done] #form{display:none}
+.sheet-title{margin:0 0 18px;font-size:15px;line-height:20px;font-weight:600;color:var(--brand-ink)}
+.row{display:grid;grid-template-columns:104px 1fr;align-items:center;min-height:30px;margin-bottom:14px}
+.row>.k{color:var(--muted)}
+.row .cap{grid-column:2;margin-top:6px;font-size:12px;line-height:17px;color:var(--muted)}
+.row.top{align-items:start}
+.row.top>.k{line-height:30px}
+.row .sw{width:auto;height:30px;justify-self:start}
+.field{height:30px;width:100%;padding:0 10px;border-radius:7px;background:var(--bg-0);border:1px solid var(--line);color:var(--text);font:500 13px/28px Inter,sans-serif;font-variant-numeric:tabular-nums;-webkit-user-select:text;user-select:text}
+.field:focus{border-color:var(--brand-gold)}
+.folder{display:flex;gap:8px;min-width:0}
+.folder .well{flex:1;min-width:0;display:flex;align-items:center;gap:8px;height:30px;padding:0 10px;border-radius:7px;background:var(--bg-0);border:1px solid var(--line);color:var(--text);font-weight:500}
+.folder .well svg{flex:none;width:14px;height:14px;color:var(--muted)}
+#summary{margin:20px 0 0;padding-top:16px;border-top:1px solid var(--line);color:var(--text);font-weight:500;white-space:pre}
+.foot{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.foot .primary{width:auto;height:30px;padding:0 18px;border-radius:7px;font-size:13px}
+#done .saved{display:grid;grid-template-columns:72px 1fr;gap:22px;align-items:center}
+#done img{width:72px;height:128px;border-radius:4px;box-shadow:0 0 0 1px var(--line);object-fit:cover;display:block}
+#done h2{margin:0 0 10px;font:italic 400 52px/56px 'Bodoni Moda',Georgia,serif;color:var(--brand-ink);letter-spacing:-.005em}
+body.fresh #done h2{animation:rise .42s var(--ease-out) both}
+@keyframes rise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+#done .file{margin:0;font-weight:500;color:var(--text)}
+#done .where{margin:2px 0 0;font-size:12px;color:var(--muted)}
+#done .acts{display:flex;gap:8px;margin-top:24px}
+#done .acts .sp{flex:1}
+
+/* ===== narrow (< 1000 px): v1's 64 px inspector row; strip and deck unchanged ===== */
+@media (max-width:999px){
+  body{grid-template-rows:var(--header-h) minmax(0,1fr) 64px var(--bottom-h);grid-template-columns:minmax(0,1fr)}
+  #ctc{width:200px}
+  #inspector{grid-row:3;grid-column:1;flex-direction:row;align-items:center;gap:20px;padding:0 20px;border-left:0;border-top:1px solid var(--line)}
+  #inspector .sec{padding:0;border:0}
+  #inspector .sec.info .meta,#inspector .grow,#inspector .count,#inspector .over,#inspector .tc-row.clip,#inspector .locate{display:none}
+  #inspector .sec.tcs{display:flex;align-items:baseline;gap:16px}
+  #inspector .sec.total{padding:0}
+  .tc-row{display:flex;gap:6px}
+  #len{font-size:24px;line-height:28px}
+  #len small,#len .of{font-size:14px}
+  #len .of{margin-left:6px}
+  #bottom{grid-row:4}
+  #inspector .sec.sws{display:flex;gap:18px}
+  #inspector .sw{width:auto;padding:0 2px;gap:8px}
+  #inspector .sw .key{display:none}
+  #inspector .primary{width:140px;margin-left:auto;flex:none}
+  #sheetwrap{right:0}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body class="no-anim" data-state="reel" data-stage="portrait" data-view="form">
+
+<header>
+  <div id="lockup">
+    <img id="dcvlogo" src="../assets/dcv-logo-white.svg" alt="DCV Applied Technology">
+    <span class="x">&times;</span>
+    <svg id="ctc" viewBox="0 0 580 60" role="img" aria-label="Coll Takes Chagrin" overflow="visible"><text class="ctcw" x="0" y="44" fill="currentColor">Coll Takes Chagrin</text></svg>
+    <span class="app">trimlab</span>
+  </div>
+  <span class="sp"></span>
+  <button id="fname" data-tip-pos="below">Spa Tour</button>
+  <button id="help" data-tip="Keys and what is on this screen (?)" data-tip-pos="below" aria-label="Help">?</button>
+</header>
+
+<main id="stage">
+  <div class="frame" id="pv-portrait"><img src="mockup-assets/still-portrait.jpg" alt=""></div>
+  <div class="frame" id="pv-landscape"><img src="mockup-assets/still-landscape.jpg" alt=""><i class="guide"></i></div>
+  <p id="stage-note"></p>
+  <div id="empty"><h1>Drop clips.</h1><p>or press ⌘O</p></div>
+</main>
+
+<aside id="inspector"></aside>
+
+<section id="bottom">
+  <div id="transport">
+    <button class="ibtn" data-tip="Back one second (⇧←)" aria-label="Back one second"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M7.5 3.5v9L1.5 8z"/><path d="M14.5 3.5v9L8.5 8z"/></svg></button>
+    <button class="ibtn play" data-tip="Play the Reel (Space)" aria-label="Play"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4c0 .5.5.8.9.5l8-5.2a.6.6 0 0 0 0-1L5.4 2.3c-.4-.3-.9 0-.9.5z"/></svg></button>
+    <button class="ibtn" data-tip="Forward one second (⇧→)" aria-label="Forward one second"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 3.5v9L7.5 8z"/><path d="M8.5 3.5v9L14.5 8z"/></svg></button>
+    <span id="playtc"></span>
+    <span class="sp" style="flex:1"></span>
+    <div class="zoom">
+      <button class="ibtn" data-tip="Zoom the Reel out (⌥⌘−)" aria-label="Zoom the Reel out" id="sz-out"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3.5 8h9"/></svg></button>
+      <span>Zoom</span>
+      <button class="ibtn" data-tip="Zoom the Reel in (⌥⌘=)" aria-label="Zoom the Reel in" id="sz-in"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3.5 8h9M8 3.5v9"/></svg></button>
+    </div>
+  </div>
+  <canvas id="reelstrip" aria-label="Reel strip: every clip in order"></canvas>
+  <div id="caption"></div>
+  <canvas id="deck" aria-label="Trim deck: the selected clip's filmstrip and waveform with In and Out handles"></canvas>
+</section>
+
+<span class="tip" id="ftip" role="tooltip"></span>
+<div id="scrim"></div>
+<div id="sheetwrap">
+  <div id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="pane" id="form">
+      <h2 class="sheet-title" id="sheet-title">Export</h2>
+      <div class="row top"><span class="k">Format</span>
+        <div><div class="seg"><button aria-pressed="true">Reel</button><button aria-pressed="false">Original</button></div>
+        <p class="cap">1080×1920, ready for Instagram.</p></div></div>
+      <div class="row"><span class="k">Cut</span>
+        <div class="seg"><button aria-pressed="true">Exact</button><span class="hold"><button aria-pressed="false" aria-disabled="true" aria-describedby="tip-quick">Quick</button><span class="tip show" id="tip-quick" role="tooltip">Quick works on a single clip saved as Original.</span></span></div></div>
+      <div class="row"><span class="k">Quality</span>
+        <div class="seg"><button aria-pressed="false">Standard</button><button aria-pressed="true">High</button></div></div>
+      <div class="row"><span class="k">HDR</span>
+        <button class="sw" role="switch" aria-checked="true"><span class="track"></span><span class="lbl">Convert HDR to SDR</span></button></div>
+      <div class="row"><label class="k" for="f-name">File name</label>
+        <input class="field" id="f-name" value="Spa Tour.mp4" spellcheck="false"></div>
+      <div class="row" style="margin-bottom:0"><span class="k">Save to</span>
+        <div class="folder"><span class="well"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M1.8 4.2c0-.7.5-1.2 1.2-1.2h3l1.5 1.6h5.5c.7 0 1.2.5 1.2 1.2v6c0 .7-.5 1.2-1.2 1.2H3c-.7 0-1.2-.5-1.2-1.2z"/></svg>Spa Tour</span><button class="btn">Choose…</button></div></div>
+      <p id="summary">48.2 s  ·  about 84 MB  ·  H.264  ·  with sound</p>
+      <div class="foot"><button class="btn" id="b-cancel">Cancel</button><button class="primary" id="b-go">Export</button></div>
+    </div>
+    <div class="pane" id="done">
+      <div class="saved">
+        <img src="mockup-assets/saved-thumb.jpg" alt="First frame of the saved Reel">
+        <div><h2>Saved.</h2>
+          <p class="file">Spa Tour.mp4</p>
+          <p class="where">84.1 MB, in Spa Tour</p></div>
+      </div>
+      <div class="acts">
+        <button class="btn">Reveal in Finder</button>
+        <button class="btn">Open in QuickTime</button>
+        <button class="btn">AirDrop</button>
+        <span class="sp"></span>
+        <button class="btn" id="b-new">New Reel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="mockup-assets/peaks.js"></script>
+<script>
+// Static mockup. Fixed data in the shape of SPEC §3.2; the app computes all of it.
+const FPS = 29.97;
+const $ = s => document.querySelector(s);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const STATES = ['empty', 'one-clip', 'reel', 'reorder', 'finder-drop', 'multi-select', 'over-3min', 'strip-zoomed',
+                'missing-clip', 'landscape-fit', 'landscape-fill', 'sheet-reel', 'done', 'narrow'];
+const FADE = {cut: 0, short: 0.25, long: 1};
+
+// 18 clips, one sprite each (design/mockup-assets/sprite-NN.jpg). len = trimmed length (s); src = source length.
+// Clip 4 is the hero: v1's IMG_4821 numbers (In 0:01.21, Out 0:10.07, 23.6 s, HDR).
+const BASE = [
+  {len: 2.4, src: 9.8}, {len: 3.1, src: 12.1}, {len: 1.8, src: 11.0},
+  {len: 0, src: 23.6, inS: 1 + 21 / FPS, outS: 10 + 7 / FPS, hdr: true},
+  {len: 2.2, src: 8.0}, {len: 3.4, src: 12.4, wide: true}, {len: 1.6, src: 11.0},
+  {len: 2.9, src: 7.7, join: 'long'}, {len: 2.4, src: 14.2}, {len: 0.6, src: 10.0},
+  {len: 2.2, src: 26.0}, {len: 1.9, src: 7.7}, {len: 3.3, src: 7.7, join: 'short'},
+  {len: 1.5, src: 6.0}, {len: 2.8, src: 9.1}, {len: 2.1, src: 13.4}, {len: 1.2, src: 12.3}, {len: 0, src: 7.7},
+];
+const clipLen = c => c.outS - c.inS;
+
+function makeClips(scale = 1, target = 48.2) {
+  const cl = BASE.map((b, i) => {
+    const c = {...b, i, spr: i, name: 'IMG_' + (4818 + i), join: b.join || 'cut', framing: 'fill', aspect: b.wide ? 16 / 9 : 9 / 16};
+    if (b.inS === undefined) { c.inS = Math.min(1.2, b.src * .1); c.outS = c.inS + b.len * scale; }
+    return c;
+  });
+  // last clip absorbs the rounding so the Reel total is exactly the spec's number
+  const last = cl[cl.length - 1];
+  last.outS = last.inS; last.src = 0;
+  const rest = reelTotal(cl);
+  const need = target - rest + effFade(cl, cl.length - 1);
+  last.outS = last.inS + need; last.src = Math.max(last.src, last.outS + 1);
+  cl.forEach(c => { c.src = Math.max(c.src, c.outS + .5); });
+  return cl;
+}
+function effFade(cl, i) {
+  if (i === 0) return 0;
+  const f = FADE[cl[i].join];
+  return f ? Math.min(f, .5 * Math.min(clipLen(cl[i - 1]), clipLen(cl[i]))) : 0;
+}
+function reelTotal(cl, missing = new Set()) {
+  let t = 0;
+  cl.forEach((c, i) => { if (!missing.has(i)) t += clipLen(c) - (missing.has(i - 1) ? 0 : effFade(cl, i)); });
+  return t;
+}
+const tc = t => { const m = Math.floor(t / 60), s = Math.floor(t % 60), f = Math.floor((t % 1) * FPS + 1e-6); return `${m}:${String(s).padStart(2, '0')}.${String(f).padStart(2, '0')}`; };
+const total = t => t < 60 ? {num: t.toFixed(1), unit: 's'} : {num: `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}`, unit: ''};
+const mss = t => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}`;
+
+// ---------- per-state model ----------
+let S;
+function stateModel(name) {
+  const m = {name, clips: makeClips(), primary: 3, also: [], missing: new Set(), zoom: null, drag: null,
+             peek: null, armed: false, stage: 'portrait', srcPlay: 4.0, view: 'form', open: false};
+  switch (name) {
+    case 'one-clip': m.clips = [Object.assign(makeClips()[3], {i: 0})]; m.primary = 0; break;
+    case 'reorder': m.drag = {from: [3], gap: 9, ghostX: null}; break;          // clip 4 dragged to between 9 and 10
+    case 'finder-drop': m.drag = {from: [], gap: 11}; break;    // Finder clips over the strip: the caret only (the armed frame is for drops elsewhere)
+    case 'multi-select': m.also = [4, 5, 6]; break;
+    case 'over-3min': m.clips = makeClips(5, 192.4); break;
+    case 'strip-zoomed': m.zoom = 64; break;
+    case 'missing-clip': m.missing.add(8); m.primary = 8; m.stage = 'note'; m.srcPlay = null; break;
+    case 'landscape-fit': m.primary = 5; m.clips[5].framing = 'fit'; m.stage = 'landscape'; m.peek = 7.6; break;
+    case 'landscape-fill': m.primary = 5; m.stage = 'landscape'; m.peek = 7.6; break;
+    case 'sheet-reel': m.open = true; break;
+    case 'done': m.open = true; m.view = 'done'; break;
+  }
+  return m;
+}
+
+// ---------- strip layout: piecewise linear, min tile 24 px, 2 px gaps at cuts, overlaps at crossfades ----------
+const STRIP = {cap: 12, tileH: 56, minW: 24, gap: 2};
+function layout(cl, W, pxs) {
+  const build = p => {
+    const tiles = []; let x = 0, t = 0;
+    cl.forEach((c, i) => {
+      const len = clipLen(c), w = Math.max(STRIP.minW, len * p), fade = effFade(cl, i);
+      if (i > 0) { if (fade) { x -= fade * p; t -= fade; } else x += STRIP.gap; }
+      tiles.push({x, w, t0: t, len, fadePx: fade * p, fade});
+      x += w; t += len;
+    });
+    return {tiles, width: x};
+  };
+  if (pxs) return {...build(pxs), pxs};
+  let lo = 1, hi = 400;                     // fit: solve for the px/s that fills W
+  for (let k = 0; k < 40; k++) { const mid = (lo + hi) / 2; (build(mid).width > W ? hi = mid : lo = mid); }
+  return {...build(lo), pxs: lo};
+}
+const xAt = (L, t) => {                     // Reel time → x (inside the tile that owns t; incoming tile in an overlap)
+  for (let i = L.tiles.length - 1; i >= 0; i--) { const tl = L.tiles[i]; if (t >= tl.t0) return tl.x + Math.min(1, (t - tl.t0) / tl.len) * tl.w; }
+  return 0;
+};
+const reelStart = (cl, i) => { let t = 0; for (let k = 0; k <= i; k++) t += (k ? clipLen(cl[k - 1]) : 0) - effFade(cl, k); return t; };
+function playhead(m) {
+  const c = m.clips[m.primary], t0 = reelStart(m.clips, m.primary);
+  if (m.peek != null) return t0 + clipLen(c) - 1 / FPS;            // peek: Reel playhead parks on the nearest kept frame
+  if (m.srcPlay == null) return t0;
+  return t0 + Math.max(0, m.srcPlay - c.inS);
+}
+
+// ---------- images ----------
+const sprites = BASE.map((_, i) => { const im = new Image(); im.src = `mockup-assets/sprite-${String(i + 1).padStart(2, '0')}.jpg`; return im; });
+const peaks = (window.MOCKUP_PEAKS || {}).peaks || [];
+
+function drawFrames(g, c, x, y, w, h, fromS, toS) {   // sprite frames edge to edge at the source aspect, sampled over [fromS, toS)
+  const im = sprites[c.spr]; if (!im.complete || !im.naturalWidth) return;
+  const cw = im.naturalWidth / 8, ch = im.naturalHeight / 5, fw = h * c.aspect;
+  for (let tx = x; tx < x + w; tx += fw) {
+    const s = fromS + ((tx + fw / 2 - x) / w) * (toS - fromS);
+    const k = Math.max(0, Math.min(39, Math.floor(s / c.src * 40)));
+    g.drawImage(im, (k % 8) * cw, Math.floor(k / 8) * ch, cw, ch, tx, y, fw, h);
+  }
+}
+function canvasCtx(cv) {
+  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+  return {g, W, H};
+}
+
+// ---------- the Reel strip ----------
+let LAYOUT = null, SCROLL = 0;
+function drawStrip() {
+  const cv = $('#reelstrip'); if (!cv.clientWidth) return;
+  const {g, W} = canvasCtx(cv), m = S, cl = m.clips;
+  const L = layout(cl, W, m.zoom); LAYOUT = L;
+  const ph = playhead(m), phx = xAt(L, ph);
+  SCROLL = m.zoom ? Math.max(0, Math.min(L.width - W, phx - W * .4)) : 0;
+  const top = STRIP.cap, H = STRIP.tileH, ink = css('--brand-ink'), gold = css('--brand-gold');
+  g.save(); g.translate(-SCROLL, 0);
+  const dragged = new Set(m.drag ? m.drag.from : []);
+  const paintTile = (i, x, alpha, w = L.tiles[i].w, y = top) => {
+    const c = cl[i];
+    g.save(); g.globalAlpha = alpha;
+    g.beginPath(); g.roundRect(x, y, w, H, 3); g.clip();
+    if (m.missing.has(i)) {
+      g.fillStyle = css('--bg-2'); g.fillRect(x, y, w, H);
+      g.font = '400 12px Inter';
+      if (g.measureText('Missing').width + 6 <= w) { g.fillStyle = css('--muted'); g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('Missing', x + w / 2, y + H / 2 + .5); }
+    } else drawFrames(g, c, x, y, w, H, c.inS, c.inS + clipLen(c) * w / L.tiles[i].w);
+    g.restore();
+  };
+  cl.forEach((c, i) => paintTile(i, L.tiles[i].x, dragged.has(i) ? .35 : 1));
+  // crossfades: the incoming tile overlaps the outgoing; a thin ivory ╳ at 70 % marks the overlap
+  g.strokeStyle = ink; g.lineWidth = 1; g.globalAlpha = .7;
+  L.tiles.forEach((tl, i) => {
+    if (!tl.fade) return;
+    const mw = Math.max(10, tl.fadePx), x0 = tl.x + tl.fadePx / 2 - mw / 2, y0 = top + 14, y1 = top + H - 14;
+    g.beginPath(); g.moveTo(x0, y0); g.lineTo(x0 + mw, y1); g.moveTo(x0 + mw, y0); g.lineTo(x0, y1); g.stroke();
+  });
+  g.globalAlpha = 1;
+  // past 3:00: tiles dim to --deck-out; the marker is a 1 px --warn line with "3:00" in the cap row
+  const tot = reelTotal(cl, m.missing);
+  if (tot > 180) {
+    const lx = Math.round(xAt(L, 180));
+    g.fillStyle = css('--bg-0'); g.globalAlpha = .70; g.fillRect(lx, top, L.width - lx, H); g.globalAlpha = 1;
+    g.fillStyle = css('--warn'); g.fillRect(lx, 0, 1, top + H);
+    g.font = '500 11px Inter'; g.textAlign = 'right'; g.textBaseline = 'alphabetic'; g.fillText('3:00', lx - 4, 10);
+  }
+  // selection outlines: primary 1.5 px gold, others 1 px --muted (inset, so the 2 px gaps stay clean)
+  const outline = (x, w, col, lw, y = top) => { g.strokeStyle = col; g.lineWidth = lw; g.beginPath(); g.roundRect(x + lw / 2, y + lw / 2, w - lw, H - lw, 3 - lw / 2); g.stroke(); };
+  // also-selected: 1 px --muted ring just outside the tile, in its half of the 2 px gap, so it reads on bright frames
+  g.strokeStyle = css('--muted'); g.lineWidth = 1;
+  m.also.forEach(i => { const tl = L.tiles[i]; g.beginPath(); g.roundRect(tl.x - .5, top - .5, tl.w + 1, H + 1, 3.5); g.stroke(); });
+  if (!dragged.has(m.primary)) outline(L.tiles[m.primary].x, L.tiles[m.primary].w, gold, 1.5);
+  // playhead: 1 px ivory with v1's 9x7 cap
+  g.fillStyle = ink; g.fillRect(Math.round(phx), top, 1, H);
+  g.beginPath(); g.roundRect(Math.round(phx) - 4, 3, 9, 7, 2); g.fill();
+  // drop caret: 2 px gold in the nearest gap; neighbours never slide
+  if (m.drag) {
+    const a = L.tiles[m.drag.gap - 1], cx = Math.round(a.x + a.w + STRIP.gap / 2) - 1;
+    g.fillStyle = gold; g.fillRect(cx, top - 4, 2, H + 8);
+    if (m.drag.from.length) {               // ghost at 80 % follows the pointer: at most 96 px wide, lifted 6 px
+      const i = m.drag.from[0], gw = Math.min(96, L.tiles[i].w), gx = cx + 14, gy = top - 6;
+      paintTile(i, gx, .8, gw, gy); outline(gx, gw, gold, 1.5, gy);
+    }
+  }
+  g.restore();
+}
+
+// ---------- the trim deck (v1 drawing, unchanged; fed the primary clip) ----------
+function drawDeck() {
+  const cv = $('#deck'); if (!cv.clientWidth) return;
+  const {g, W} = canvasCtx(cv), m = S, c = m.clips[m.primary], missing = m.missing.has(m.primary);
+  const top = 12, filmH = 64, gap = 2, waveH = 44, stripH = filmH + gap + waveH, bot = top + stripH;
+  const x = t => Math.round(t / c.src * W);
+  const xi = x(c.inS), xo = x(c.outS), xp = x(m.peek != null ? m.peek : m.srcPlay != null ? m.srcPlay : c.inS);
+  g.fillStyle = css('--bg-0'); g.fillRect(0, top, W, stripH);
+  if (missing) { g.fillStyle = css('--bg-2'); g.fillRect(0, top, W, filmH); g.fillRect(0, top + filmH + gap, W, waveH); }
+  else {
+    drawFrames(g, c, 0, top, W, filmH, 0, c.src);
+    const muted = S.removeAudio, cy = top + filmH + gap + waveH / 2;
+    g.fillStyle = css('--wave'); g.globalAlpha = muted ? .2 : .85;
+    for (let px = 0; px < W; px += 2) {
+      const p = peaks.length ? peaks[Math.min(peaks.length - 1, Math.floor(((px / W * c.src) * 50 + c.spr * 37) % peaks.length))] : 0;
+      const a = Math.max(.5, Math.sqrt(p) * (waveH / 2 - 3));
+      g.fillRect(px, cy - a, 1, a * 2);
+    }
+    g.globalAlpha = 1;
+  }
+  g.fillStyle = css('--bg-0'); g.globalAlpha = .70;
+  g.fillRect(0, top, xi, stripH); g.fillRect(xo, top, W - xo, stripH); g.globalAlpha = 1;
+  const gold = css('--brand-gold');
+  g.fillStyle = gold; g.fillRect(xi, top, xo - xi, 1); g.fillRect(xi, bot - 1, xo - xi, 1);
+  const bracket = (bx, dir) => {
+    const bar = dir > 0 ? bx - 3 : bx;
+    g.fillStyle = gold; g.fillRect(bar, top, 3, stripH);
+    const fx = dir > 0 ? bx : bx - 7;
+    g.fillRect(fx, top, 7, 2); g.fillRect(fx, bot - 2, 7, 2);
+    const tabY = top + stripH / 2 - 9;
+    g.beginPath(); g.roundRect(dir > 0 ? bar - 9 : bar + 3, tabY, 9, 18, dir > 0 ? [3, 0, 0, 3] : [0, 3, 3, 0]); g.fill();
+    g.fillStyle = css('--bg-0'); g.fillRect(dir > 0 ? bar - 5 : bar + 6, tabY + 5, 1, 8);
+  };
+  bracket(xi, 1); bracket(xo, -1);
+  if (!missing) {
+    g.fillStyle = css('--brand-ink'); g.fillRect(xp, top, 1, stripH);
+    g.beginPath(); g.roundRect(xp - 4, 3, 9, 7, 2); g.fill();
+  }
+}
+
+// ---------- DOM parts ----------
+const sw = (id, label, key, on) => `<button class="sw" role="switch" aria-checked="${on}" id="${id}"><span class="track"></span><span class="lbl">${label}</span><span class="key">${key}</span></button>`;
+function renderInspector() {
+  const m = S, c = m.clips[m.primary], one = m.clips.length === 1, missing = m.missing.has(m.primary);
+  const tot = reelTotal(m.clips, m.missing), T = total(tot), over = tot > 180;
+  const meta = missing ? 'Missing'
+    : `${c.wide ? '1920×1080' : '1080×1920'}, HEVC, 29.97 fps<br>${c.src.toFixed(1)} s${c.hdr ? ', HDR (HLG)' : ''}`;
+  $('#inspector').innerHTML = `
+    <div class="sec info"><p id="clipname">${c.name}</p><p class="meta">${meta}</p>
+      ${missing ? '<button class="btn locate">Locate…</button>' : ''}</div>
+    <div class="sec tcs">
+      <div class="tc-row"><span class="k">In</span><span class="tc">${tc(c.inS)}</span></div>
+      <div class="tc-row"><span class="k">Out</span><span class="tc">${tc(c.outS)}</span></div>
+      ${one ? '' : `<div class="tc-row clip"><span class="k">Clip</span><span class="tc">${clipLen(c).toFixed(1)} s</span></div>`}
+      ${one ? `<div id="len" style="margin-top:14px">${T.num}<small>${T.unit}</small><span class="of">of 3:00</span></div>` : ''}
+    </div>
+    ${one ? '' : `<div class="sec total">
+      <div id="len" class="${over ? 'warn' : ''}">${T.num}${T.unit ? `<small>${T.unit}</small>` : ''}<span class="of">of 3:00</span></div>
+      <p class="count">${m.clips.length} clips</p>
+      ${over ? `<p class="over">Instagram Reels can be up to 3 minutes. Trim ${mss(tot - 180)} more.</p>` : ''}
+    </div>`}
+    <div class="sec sws">${sw('sw-audio', 'Remove audio', 'A', !!m.removeAudio)}${sw('sw-loop', 'Loop Reel', '\\', true)}</div>
+    <div class="grow"></div>
+    <button class="primary" id="b-export">Export…<span class="key">⌘E</span></button>`;
+  $('#b-export').onclick = openSheet;
+  $('#sw-audio').onclick = () => { S.removeAudio = !S.removeAudio; render(); };
+}
+const seg = (opts, cur, sm) => `<div class="seg${sm ? ' sm' : ''}">${opts.map(o => `<button aria-pressed="${o.toLowerCase() === cur}" data-v="${o.toLowerCase()}">${o}</button>`).join('')}</div>`;
+function renderCaption() {
+  const m = S, c = m.clips[m.primary], one = m.clips.length === 1;
+  const n = 1 + m.also.length;
+  $('#caption').innerHTML = `
+    <span class="name">${c.name}</span>
+    ${one ? '' : `<span class="pos">clip ${m.primary + 1} of ${m.clips.length}</span>`}
+    ${n > 1 ? `<span class="sel">${n} clips selected</span>` : ''}
+    <span class="sp"></span>
+    ${c.wide ? `<span class="ctl" id="c-framing"><span class="lbl">Framing</span>${seg(['Fill', 'Fit'], c.framing, true)}</span>` : ''}
+    ${m.primary > 0 ? `<span class="ctl" id="c-join"><span class="lbl">Crossfade in</span>${seg(['Cut', 'Short', 'Long'], c.join, true)}</span>` : ''}
+    <span class="zoom">
+      <button class="ibtn sm" data-tip="Zoom the clip out (⌘−)" aria-label="Zoom the clip out"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3.5 8h9"/></svg></button>
+      <span>Zoom</span>
+      <button class="ibtn sm" data-tip="Zoom the clip in (⌘=)" aria-label="Zoom the clip in"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3.5 8h9M8 3.5v9"/></svg></button>
+    </span>`;
+  const fr = $('#c-framing'), jn = $('#c-join');
+  if (fr) fr.onclick = e => { const b = e.target.closest('button'); if (b) { setFraming(b.dataset.v); } };
+  if (jn) jn.onclick = e => { const b = e.target.closest('button'); if (b) { S.clips[S.primary].join = b.dataset.v; render(); } };
+  bindTips($('#caption'));
+}
+function setFraming(v) {
+  [S.primary, ...S.also].forEach(i => { if (S.clips[i].wide) S.clips[i].framing = v; });
+  render();
+}
+
+function render() {
+  const m = S, b = document.body;
+  b.dataset.state = m.name;
+  b.dataset.stage = m.name === 'empty' ? 'empty' : m.stage;
+  b.dataset.view = m.view;
+  b.classList.toggle('open', m.open);
+  b.classList.toggle('drop-armed', m.armed);
+  hideTip();
+  if (m.name === 'empty') return;
+  const one = m.clips.length === 1;
+  const fn = $('#fname');
+  fn.textContent = one ? m.clips[0].name + '.MOV' : 'Spa Tour';
+  fn.classList.toggle('reel', !one);
+  if (one) delete fn.dataset.tip; else fn.dataset.tip = 'Rename the Reel';
+  const pc = m.clips[m.primary];
+  $('#pv-landscape .guide').style.display = pc.framing === 'fill' ? '' : 'none';
+  const pimg = $('#pv-portrait img');
+  pimg.src = pc.wide ? 'mockup-assets/still-landscape.jpg' : 'mockup-assets/still-portrait.jpg';
+  pimg.style.objectFit = pc.wide && pc.framing === 'fit' ? 'contain' : 'cover';
+  if (m.stage === 'note') $('#stage-note').textContent = `${m.clips[m.primary].name}.MOV is missing. Locate it or remove it from the Reel.`;
+  const tot = reelTotal(m.clips, m.missing);
+  $('#playtc').innerHTML = `<span class="now">${tc(playhead(m))}</span><span class="tot"> / ${tc(tot)}</span>`;
+  renderInspector(); renderCaption(); drawStrip(); drawDeck();
+  bindTips($('#inspector'));
+}
+
+let PENDING = null, OPENER = null;     // in-page navigation keeps the model; a direct load builds the state fresh
+function openSheet() { OPENER = S; PENDING = {...S, name: 'sheet-reel', open: true, view: 'form'}; go('sheet-reel'); }
+function closeSheet() { const o = OPENER || stateModel('reel'); OPENER = null; PENDING = {...o, open: false, view: 'form'}; go(PENDING.name); }
+function apply(state) {
+  if (!STATES.includes(state)) state = 'reel';
+  if (PENDING && PENDING.name === state) { S = PENDING; PENDING = null; if (state !== 'done') document.body.classList.remove('fresh'); render(); return; }
+  S = stateModel(state === 'narrow' ? 'reel' : state);
+  S.name = state === 'narrow' ? 'narrow' : state;
+  if (state !== 'done') document.body.classList.remove('fresh');
+  render();
+}
+function go(state) { if (location.hash !== '#' + state) location.hash = state; else apply(state); }
+
+// ---------- strip clicks: select (⇧ range, ⌘ toggle), click on a join cycles it; hover a join for its tip ----------
+function stripHit(ev) {
+  if (!LAYOUT) return null;
+  const r = $('#reelstrip').getBoundingClientRect(), x = ev.clientX - r.left + SCROLL, y = ev.clientY - r.top;
+  if (y < STRIP.cap || y > STRIP.cap + STRIP.tileH) return null;
+  for (let i = 1; i < LAYOUT.tiles.length; i++) {
+    const tl = LAYOUT.tiles[i], a = LAYOUT.tiles[i - 1];
+    const jx0 = tl.fade ? Math.min(tl.x, tl.x + tl.fadePx / 2 - 2) : a.x + a.w, jx1 = tl.fade ? Math.max(tl.x + tl.fadePx, tl.x + tl.fadePx / 2 + 2) : tl.x;   // a cut's zone is the 2 px gap itself
+    if (x >= jx0 && x <= jx1) return {join: i, x: (jx0 + jx1) / 2 - SCROLL + r.left, y: r.top + STRIP.cap};
+  }
+  for (let i = LAYOUT.tiles.length - 1; i >= 0; i--) { const tl = LAYOUT.tiles[i]; if (x >= tl.x && x <= tl.x + tl.w) return {tile: i}; }
+  return null;
+}
+const joinTip = i => { const c = S.clips[i]; if (!effFade(S.clips, i)) return 'Cut (X)';
+  const f = effFade(S.clips, i), chosen = FADE[c.join]; return f < chosen ? `Crossfade, ${f.toFixed(1)} s (clip is short)` : `Crossfade, ${chosen} s`; };
+$('#reelstrip').addEventListener('click', ev => {
+  const h = stripHit(ev); if (!h || S.name === 'empty') return;
+  if (h.join) { const c = S.clips[h.join]; c.join = {cut: 'short', short: 'long', long: 'cut'}[c.join]; render(); return; }
+  const i = h.tile;
+  if (ev.shiftKey) { const lo = Math.min(S.primary, i), hi = Math.max(S.primary, i); S.also = []; for (let k = lo; k <= hi; k++) if (k !== S.primary) S.also.push(k); }
+  else if (ev.metaKey) { if (i !== S.primary) S.also = S.also.includes(i) ? S.also.filter(k => k !== i) : [...S.also, i]; }
+  else { S.primary = i; S.also = []; S.peek = null; S.srcPlay = S.missing.has(i) ? null : S.clips[i].inS; S.stage = S.missing.has(i) ? 'note' : 'portrait'; S.drag = null; S.armed = false; }
+  render();
+});
+$('#reelstrip').addEventListener('mousemove', ev => {
+  const h = stripHit(ev);
+  if (h && h.join) { clearTimeout(tipTimer); tipTimer = setTimeout(() => showTipAt(joinTip(h.join), h.x, h.y, false), 350); }
+  else hideTip();
+});
+$('#reelstrip').addEventListener('mouseleave', hideTip);
+$('#sz-in').onclick = () => { S.zoom = Math.min(200, (S.zoom || LAYOUT.pxs) * 1.6); render(); };
+$('#sz-out').onclick = () => { const z = (S.zoom || LAYOUT.pxs) / 1.6; S.zoom = z <= layout(S.clips, $('#reelstrip').clientWidth).pxs ? null : z; render(); };
+
+// ---------- sheet ----------
+$('#b-cancel').onclick = closeSheet;
+$('#b-go').onclick = () => { document.body.classList.add('fresh'); PENDING = {...S, name: 'done', view: 'done'}; go('done'); };
+$('#b-new').onclick = () => { OPENER = null; go('empty'); };
+$('#scrim').onclick = closeSheet;
+document.querySelectorAll('#sheet .seg').forEach(sg => sg.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || b.getAttribute('aria-disabled') === 'true') return;
+  sg.querySelectorAll('button').forEach(o => o.setAttribute('aria-pressed', o === b));
+}));
+document.querySelectorAll('#sheet .sw').forEach(s => s.addEventListener('click', () => s.setAttribute('aria-checked', s.getAttribute('aria-checked') !== 'true')));
+addEventListener('keydown', e => {
+  if (e.target.matches('input')) { if (e.key === 'Escape') e.target.blur(); return; }
+  if (e.key === 'Escape') { if (document.body.classList.contains('open')) closeSheet(); else if (S.also.length) { S.also = []; render(); } }
+  else if (e.metaKey && e.key.toLowerCase() === 'e') { e.preventDefault(); if (!S.open && S.name !== 'empty') openSheet(); }
+  else if (S.open || S.name === 'empty') return;
+  else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault(); const i = Math.max(0, Math.min(S.clips.length - 1, S.primary + (e.key === 'ArrowDown' ? 1 : -1)));
+    S.primary = i; S.also = []; S.peek = null; S.srcPlay = S.missing.has(i) ? null : S.clips[i].inS; S.stage = S.missing.has(i) ? 'note' : 'portrait'; render();
+  } else if (e.key.toLowerCase() === 'x' && S.primary > 0) { const c = S.clips[S.primary]; c.join = {cut: 'short', short: 'long', long: 'cut'}[c.join]; render(); }
+  else if (e.key.toLowerCase() === 'f' && S.clips[S.primary].wide) setFraming(S.clips[S.primary].framing === 'fill' ? 'fit' : 'fill');
+  else if (e.key.toLowerCase() === 'a') { S.removeAudio = !S.removeAudio; render(); }
+});
+
+// ---------- tooltips (v1): 350 ms after hover, at once on keyboard focus; no title attributes ----------
+const ftip = $('#ftip'); let tipTimer = 0;
+function showTipAt(text, cx, y, below) {
+  ftip.textContent = text;
+  const t = ftip.getBoundingClientRect();
+  const left = Math.max(8, Math.min(innerWidth - t.width - 8, cx - t.width / 2));
+  ftip.style.left = left + 'px'; ftip.style.top = (below ? y + 8 : y - t.height - 8) + 'px';
+  ftip.classList.toggle('below', below); ftip.style.setProperty('--ax', (cx - left) + 'px'); ftip.classList.add('show');
+}
+function showTip(el) { const r = el.getBoundingClientRect(), below = el.dataset.tipPos === 'below'; showTipAt(el.dataset.tip, r.left + r.width / 2, below ? r.bottom : r.top, below); }
+function hideTip() { clearTimeout(tipTimer); ftip.classList.remove('show'); }
+function bindTips(root) {
+  root.querySelectorAll('[data-tip]').forEach(el => {
+    if (el._tip) return; el._tip = true;
+    el.addEventListener('mouseenter', () => { if (!el.dataset.tip) return; clearTimeout(tipTimer); tipTimer = setTimeout(() => showTip(el), 350); });
+    el.addEventListener('mouseleave', hideTip);
+    el.addEventListener('focus', () => { if (el.dataset.tip && el.matches(':focus-visible')) showTip(el); });
+    el.addEventListener('blur', hideTip);
+    el.addEventListener('mousedown', hideTip);
+  });
+}
+bindTips(document);
+addEventListener('hashchange', () => apply(location.hash.slice(1)));
+addEventListener('resize', () => { if (S && S.name !== 'empty') { drawStrip(); drawDeck(); } });
+
+// first paint: the hash state without animation, then motion on; __ready after fonts and every image
+Promise.all([document.fonts.ready, ...sprites.map(im => im.decode().catch(() => {})),
+             ...[...document.images].map(im => im.decode().catch(() => {}))]).then(() => {
+  apply(location.hash.slice(1));
+  requestAnimationFrame(() => requestAnimationFrame(() => { document.body.classList.remove('no-anim'); window.__ready = true; }));
+});
+</script>
+</body>
+</html>
